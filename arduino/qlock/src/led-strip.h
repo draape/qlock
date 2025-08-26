@@ -9,8 +9,9 @@ enum class LEDPattern
   OFF,
   PULSING_YELLOW, // WiFi connecting
   PULSING_BLUE,   // Time syncing
-  BLINKING_RED,   // Error
-  SOLID_GREEN     // All good
+  PULSING_WHITE,  // Non-critical warning (time refresh failed)
+  BLINKING_RED,   // Critical error
+  SOLID_GREEN     // Success
 };
 
 class WS2812Status
@@ -20,15 +21,16 @@ public:
 
   void begin();
   void setPattern(LEDPattern pattern);
-  void update();
-  void clear();
-  void show();
+  void update(); // Call this in loop() for non-blocking patterns
+  void clear();  // Turn off all pixels
+  void show();   // Update the strip
 
+  // Access to the strip for your word clock logic
   Adafruit_NeoPixel &getStrip() { return strip_; }
 
 private:
   Adafruit_NeoPixel strip_;
-  int statusPixelIndex_;
+  int statusPixelIndex_; // Which pixel to use for status indication
   LEDPattern currentPattern_;
   unsigned long lastUpdate_;
   int pulseValue_;

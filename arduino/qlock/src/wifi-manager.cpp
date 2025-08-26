@@ -1,13 +1,14 @@
 #include "wifi-manager.h"
+#include <Arduino.h>
 
 WiFiManager::WiFiManager(const char *ssid, const char *password)
     : ssid_(ssid), password_(password), status_(WiFiConnectionStatus::DISCONNECTED), lastReconnectAttempt_(0)
 {
 }
 
-bool WiFiManager::connect()
+void WiFiManager::connect()
 {
-  Serial.println("Connecting to WiFi");
+  Serial.println("Starting WiFi connection...");
   status_ = WiFiConnectionStatus::CONNECTING;
 
   WiFi.persistent(false);
@@ -15,38 +16,29 @@ bool WiFiManager::connect()
   WiFi.setAutoReconnect(true);
   WiFi.setSleepMode(WIFI_NONE_SLEEP);
   WiFi.begin(ssid_, password_);
-
-  int attempts = 0;
-  while (WiFi.status() != WL_CONNECTED && attempts < 20)
-  {
-    printWiFiStatus(WiFi.status());
-    delay(500);
-    attempts++;
-  }
-
-  if (WiFi.status() == WL_CONNECTED)
-  {
-    status_ = WiFiConnectionStatus::CONNECTED;
-    Serial.println("WiFi Connected!");
-    return true;
-  }
-  else
-  {
-    status_ = WiFiConnectionStatus::FAILED;
-    Serial.println("WiFi Connection failed!");
-    return false;
-  }
 }
 
 bool WiFiManager::isConnected()
 {
-  return WiFi.status() == WL_CONNECTED && status_ == WiFiConnectionStatus::CONNECTED;
+  if (WiFi.status() == WL_CONNECTED && status_ != WiFiConnectionStatus::CONNECTED)
+  {
+    status_ = WiFiConnectionStatus::CONNECTED;
+    Serial.println("WiFi Connected!");
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
+  }
+  else if (WiFi.status() != WL_CONNECTED && status_ == WiFiConnectionStatus::CONNECTED)
+  {
+    status_ = WiFiConnectionStatus::DISCONNECTED;
+  }
+
+  return WiFi.status() == WL_CONNECTED;
 }
 
 void WiFiManager::handleReconnection()
 {
   if (!isConnected() && (millis() - lastReconnectAttempt_ > 30000))
-  {
+  { // Try every 30 seconds
     lastReconnectAttempt_ = millis();
     Serial.println("Attempting WiFi reconnection...");
     connect();

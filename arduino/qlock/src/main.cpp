@@ -2,31 +2,22 @@
 #include "wifi-manager.h"
 #include "time-manager.h"
 #include "led-strip.h"
-
-// Configuration
-const char *WIFI_SSID = "WapipapoZen";
-const char *WIFI_PASSWORD = "ganskesikkert";
+#include "wifi-config.h"
 
 // LED Configuration
-const int LED_PIN = D4;         // GPIO pin for WS2812 strip
-const int NUM_LEDS = 144;       // Total number of LEDs in your strip
-const int STATUS_LED_INDEX = 0; // Which LED to use for status (first LED)
+const int LED_PIN = D4;
+const int NUM_LEDS = 144;
+const int STATUS_LED_INDEX = 0;
 
 // Global objects
 WiFiManager wifiManager(WIFI_SSID, WIFI_PASSWORD);
 TimeManager timeManager;
 WS2812Status statusLED(LED_PIN, NUM_LEDS, STATUS_LED_INDEX);
 
-// System state
-enum class SystemState
-{
-  WIFI_CONNECTING,
-  TIME_SYNCING,
-  RUNNING,
-  ERROR
-};
-
-SystemState currentState = SystemState::WIFI_CONNECTING;
+// Simple state tracking
+bool initialSetupComplete = false;
+unsigned long lastTimeFetch = 0;
+const unsigned long TIME_FETCH_INTERVAL = 24UL * 60 * 60 * 1000; // 24 hours in milliseconds
 
 void setup()
 {
@@ -39,93 +30,134 @@ void setup()
   statusLED.begin();
   statusLED.setPattern(LEDPattern::PULSING_YELLOW);
 
-  // Connect to WiFi
+  // Try to connect to WiFi - blocking is fine for your use case
+  Serial.println("Connecting to WiFi for initial setup...");
   if (wifiManager.connect())
   {
-    Serial.println("WiFi connected, starting time sync...");
-    currentState = SystemState::TIME_SYNCING;
+    Serial.println("WiFi connected, fetching time...");
     statusLED.setPattern(LEDPattern::PULSING_BLUE);
+
     timeManager.begin();
+
+    // Wait for time sync with timeout
+    unsigned long syncStart = millis();
+    while (!timeManager.isTimeSynced() && (millis() - syncStart < 15000))
+    {
+      statusLED.update(); // Keep the blue pulse going
+      timeManager.update();
+      delay(100);
+    }
+
+    if (timeManager.isTimeSynced())
+    {
+      Serial.println("Time synchronized successfully!");
+      statusLED.setPattern(LEDPattern::SOLID_GREEN);
+      initialSetupComplete = true;
+      lastTimeFetch = millis();
+
+      // Disconnect WiFi to save power
+      WiFi.disconnect();
+      WiFi.mode(WIFI_OFF);
+      Serial.println("WiFi disconnected - setup complete!");
+
+      delay(2000);                           // Show green for 2 seconds
+      statusLED.setPattern(LEDPattern::OFF); // Turn off status LED
+    }
+    else
+    {
+      Serial.println("Time sync failed!");
+      statusLED.setPattern(LEDPattern::BLINKING_RED);
+      // Stay in error mode - manual reset required
+      while (true)
+      {
+        statusLED.update();
+        delay(100);
+      }
+    }
   }
   else
   {
     Serial.println("WiFi connection failed!");
-    currentState = SystemState::ERROR;
     statusLED.setPattern(LEDPattern::BLINKING_RED);
+    // Stay in error mode - manual reset required
+    while (true)
+    {
+      statusLED.update();
+      delay(100);
+    }
   }
 }
 
 void loop()
 {
-  // Always update LED patterns and managers
-  statusLED.update();
-  timeManager.update();
-  wifiManager.handleReconnection();
+  statusLED.update(); // In case we need status updates
 
-  // State machine
-  switch (currentState)
+  if (!initialSetupComplete)
   {
-  case SystemState::WIFI_CONNECTING:
-    if (wifiManager.isConnected())
-    {
-      currentState = SystemState::TIME_SYNCING;
-      statusLED.setPattern(LEDPattern::PULSING_BLUE);
-      timeManager.begin();
-    }
-    delay(100);
-    break;
+    // Should not reach here, but safety check
+    delay(1000);
+    return;
+  }
 
-  case SystemState::TIME_SYNCING:
-    if (timeManager.isTimeSynced())
+  // Check if it's time for daily time refresh
+  if (millis() - lastTimeFetch > TIME_FETCH_INTERVAL)
+  {
+    attemptTimeRefresh();
+  }
+
+  // Your word clock logic here
+  handleWordClock();
+}
+
+void attemptTimeRefresh()
+{
+  Serial.println("Attempting daily time refresh...");
+  statusLED.setPattern(LEDPattern::PULSING_BLUE);
+
+  // Reconnect WiFi
+  WiFi.mode(WIFI_STA);
+  if (wifiManager.connect())
+  {
+    timeManager.begin();
+
+    // Try for 10 seconds
+    unsigned long syncStart = millis();
+    bool syncSuccess = false;
+    while (!syncSuccess && (millis() - syncStart < 10000))
     {
-      Serial.println("System ready!");
-      currentState = SystemState::RUNNING;
+      statusLED.update();
+      timeManager.update();
+      if (timeManager.isTimeSynced())
+      {
+        syncSuccess = true;
+        break;
+      }
+      delay(100);
+    }
+
+    if (syncSuccess)
+    {
+      Serial.println("Daily time refresh successful!");
       statusLED.setPattern(LEDPattern::SOLID_GREEN);
+      delay(1000);
+      statusLED.setPattern(LEDPattern::OFF);
+      lastTimeFetch = millis();
     }
-    else if (timeManager.getStatus() == TimeStatus::FAILED)
+    else
     {
-      Serial.println("Time sync failed!");
-      currentState = SystemState::ERROR;
-      statusLED.setPattern(LEDPattern::BLINKING_RED);
+      Serial.println("Daily time refresh failed - continuing with current time");
+      statusLED.setPattern(LEDPattern::PULSING_WHITE); // Non-critical warning
+      // Don't update lastTimeFetch, will try again tomorrow
     }
-    delay(100);
-    break;
 
-  case SystemState::RUNNING:
-    handleWordClock();
-
-    // Check for connection issues
-    if (!wifiManager.isConnected())
-    {
-      Serial.println("WiFi disconnected!");
-      currentState = SystemState::ERROR;
-      statusLED.setPattern(LEDPattern::BLINKING_RED);
-    }
-    else if (!timeManager.isTimeSynced())
-    {
-      Serial.println("Time sync lost!");
-      currentState = SystemState::TIME_SYNCING;
-      statusLED.setPattern(LEDPattern::PULSING_BLUE);
-    }
-    break;
-
-  case SystemState::ERROR:
-    // Try to recover
-    if (wifiManager.isConnected() && timeManager.isTimeSynced())
-    {
-      Serial.println("System recovered!");
-      currentState = SystemState::RUNNING;
-      statusLED.setPattern(LEDPattern::SOLID_GREEN);
-    }
-    else if (wifiManager.isConnected())
-    {
-      Serial.println("WiFi recovered, resyncing time...");
-      currentState = SystemState::TIME_SYNCING;
-      statusLED.setPattern(LEDPattern::PULSING_BLUE);
-      timeManager.begin();
-    }
-    delay(1000); // Wait longer in error state
-    break;
+    // Disconnect WiFi again
+    WiFi.disconnect();
+    WiFi.mode(WIFI_OFF);
+  }
+  else
+  {
+    Serial.println("WiFi connection failed during refresh - continuing with current time");
+    statusLED.setPattern(LEDPattern::PULSING_WHITE); // Non-critical warning
   }
 }
 
@@ -134,8 +166,7 @@ void handleWordClock()
   struct tm timeInfo;
   if (!timeManager.getCurrentTime(&timeInfo))
   {
-    Serial.println("Waiting for time sync...");
-    delay(1000);
+    Serial.println("No time available - clock stopped");
     return;
   }
 
@@ -145,18 +176,9 @@ void handleWordClock()
   Serial.println(timeBuffer);
 
   // TODO: Add your word clock logic here:
-  // - Map time to letters
   // - Clear the strip: statusLED.clear()
   // - Set pixels for time display: statusLED.getStrip().setPixelColor(i, color)
   // - Update the strip: statusLED.show()
-  // - Note: Status LED (index STATUS_LED_INDEX) will be overwritten by status system
-
-  // Example: Set a few LEDs to white for testing
-  // statusLED.clear();
-  // for (int i = 1; i < 10; i++) {  // Skip status LED at index 0
-  //   statusLED.getStrip().setPixelColor(i, statusLED.getStrip().Color(50, 50, 50));
-  // }
-  // statusLED.show();
 
   // Sleep until the next minute
   int secondsToWait = 60 - timeInfo.tm_sec;

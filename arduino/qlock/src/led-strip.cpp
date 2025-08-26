@@ -1,4 +1,5 @@
 #include "led-strip.h"
+#include <Arduino.h>
 
 WS2812Status::WS2812Status(int pin, int numPixels, int statusPixelIndex)
     : strip_(numPixels, pin, NEO_GRB + NEO_KHZ800),
@@ -28,6 +29,7 @@ void WS2812Status::setPattern(LEDPattern pattern)
     pulseDirection_ = 1;
     blinkState_ = false;
 
+    // Handle immediate patterns
     switch (pattern)
     {
     case LEDPattern::OFF:
@@ -39,6 +41,7 @@ void WS2812Status::setPattern(LEDPattern pattern)
       strip_.show();
       break;
     default:
+      // Animated patterns handled in update()
       break;
     }
   }
@@ -50,6 +53,7 @@ void WS2812Status::update()
   {
   case LEDPattern::PULSING_YELLOW:
   case LEDPattern::PULSING_BLUE:
+  case LEDPattern::PULSING_WHITE:
     updatePulse();
     break;
 
@@ -58,6 +62,7 @@ void WS2812Status::update()
     break;
 
   default:
+    // Static patterns don't need updates
     break;
   }
 }
@@ -66,9 +71,8 @@ void WS2812Status::updatePulse()
 {
   unsigned long currentTime = millis();
 
-  // Update every 20ms for smooth pulse
   if (currentTime - lastUpdate_ > 20)
-  {
+  { // Update every 20ms for smooth pulse
     lastUpdate_ = currentTime;
 
     pulseValue_ += pulseDirection_ * 5;
@@ -94,9 +98,8 @@ void WS2812Status::updateBlink()
 {
   unsigned long currentTime = millis();
 
-  // Blink every 300ms
   if (currentTime - lastUpdate_ > 300)
-  {
+  { // Blink every 300ms
     lastUpdate_ = currentTime;
     blinkState_ = !blinkState_;
 
@@ -130,6 +133,8 @@ uint32_t WS2812Status::colorFromPattern(LEDPattern pattern, int brightness)
     return strip_.Color((brightness * 255) / 255, (brightness * 200) / 255, 0); // Yellow
   case LEDPattern::PULSING_BLUE:
     return strip_.Color(0, 0, brightness); // Blue
+  case LEDPattern::PULSING_WHITE:
+    return strip_.Color(brightness, brightness, brightness); // White
   case LEDPattern::BLINKING_RED:
     return strip_.Color(brightness, 0, 0); // Red
   case LEDPattern::SOLID_GREEN:
