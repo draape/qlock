@@ -1,5 +1,5 @@
-#ifndef WS2812_STATUS_H
-#define WS2812_STATUS_H
+#ifndef LED_STRIP_H
+#define LED_STRIP_H
 
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
@@ -11,7 +11,8 @@ enum class LEDPattern
   PULSING_BLUE,   // Time syncing
   PULSING_WHITE,  // Non-critical warning (time refresh failed)
   BLINKING_RED,   // Critical error
-  SOLID_GREEN     // Success
+  SOLID_GREEN,    // Success (temporary)
+  SOLID_WHITE     // Connection successful (stays on)
 };
 
 class LedStrip

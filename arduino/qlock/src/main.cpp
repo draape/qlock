@@ -5,7 +5,7 @@
 #include "wifi-config.h" // Contains WIFI_SSID and WIFI_PASSWORD
 
 // LED Configuration
-const int LED_PIN = D1;
+const int LED_PIN = D1; // Your WS2812 strip data pin
 const int NUM_LEDS = 144;
 const int STATUS_LED_INDEX = 0;
 
@@ -56,7 +56,7 @@ void attemptTimeRefresh()
       Serial.println("Daily time refresh successful!");
       ledStrip.setPattern(LEDPattern::SOLID_GREEN);
       delay(1000);
-      ledStrip.setPattern(LEDPattern::OFF);
+      ledStrip.setPattern(LEDPattern::SOLID_WHITE); // Back to white status
       lastTimeFetch = millis();
     }
     else
@@ -109,7 +109,9 @@ void setup()
   Serial.println("Word Clock starting...");
 
   // Initialize LED strip
+  Serial.println("Initializing LED strip...");
   ledStrip.begin();
+  Serial.println("Setting pattern to pulsing yellow...");
   ledStrip.setPattern(LEDPattern::PULSING_YELLOW);
 
   // Connect to WiFi with LED callback
@@ -142,8 +144,9 @@ void setup()
       WiFi.mode(WIFI_OFF);
       Serial.println("WiFi disconnected - setup complete!");
 
-      delay(2000);                          // Show green for 2 seconds
-      ledStrip.setPattern(LEDPattern::OFF); // Turn off status LED
+      delay(2000);                                  // Show green for 2 seconds
+      ledStrip.setPattern(LEDPattern::SOLID_WHITE); // Keep white status LED on
+      Serial.println("Status LED set to solid white - system ready!");
     }
     else
     {

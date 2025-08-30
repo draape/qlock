@@ -37,6 +37,7 @@ void LedStrip::setPattern(LEDPattern pattern)
       strip_.show();
       break;
     case LEDPattern::SOLID_GREEN:
+    case LEDPattern::SOLID_WHITE:
       strip_.setPixelColor(statusPixelIndex_, colorFromPattern(pattern));
       strip_.show();
       break;
@@ -139,6 +140,8 @@ uint32_t LedStrip::colorFromPattern(LEDPattern pattern, int brightness)
     return strip_.Color(brightness, 0, 0); // Red
   case LEDPattern::SOLID_GREEN:
     return strip_.Color(0, brightness, 0); // Green
+  case LEDPattern::SOLID_WHITE:
+    return strip_.Color(brightness, brightness, brightness); // White
   default:
     return 0; // Off
   }

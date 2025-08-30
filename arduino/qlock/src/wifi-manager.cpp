@@ -28,7 +28,7 @@ bool WiFiManager::connectWithCallback(void (*updateCallback)())
 
   unsigned long startTime = millis();
   unsigned long lastStatusPrint = 0;
-  const unsigned long timeout = 30000;      // 30 second timeout
+  const unsigned long timeout = 60000;      // 30 second timeout
   const unsigned long statusInterval = 500; // Print status every 500ms
 
   while (WiFi.status() != WL_CONNECTED)
