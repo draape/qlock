@@ -17,6 +17,7 @@ public:
   WiFiManager(const char *ssid, const char *password);
 
   bool connect();
+  bool connectWithCallback(void (*updateCallback)() = nullptr);
   bool isConnected();
   void handleReconnection();
   WiFiConnectionStatus getStatus();

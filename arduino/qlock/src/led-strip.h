@@ -14,10 +14,10 @@ enum class LEDPattern
   SOLID_GREEN     // Success
 };
 
-class WS2812Status
+class LedStrip
 {
 public:
-  WS2812Status(int pin, int numPixels, int statusPixelIndex = 0);
+  LedStrip(int pin, int numPixels, int statusPixelIndex = 0);
 
   void begin();
   void setPattern(LEDPattern pattern);

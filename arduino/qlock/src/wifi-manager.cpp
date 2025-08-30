@@ -6,22 +6,76 @@ WiFiManager::WiFiManager(const char *ssid, const char *password)
 {
 }
 
-void WiFiManager::connect()
+bool WiFiManager::connectWithCallback(void (*updateCallback)())
 {
-  Serial.println("Starting WiFi connection...");
+  Serial.println("Connecting to WiFi...");
+  Serial.printf("SSID: %s\n", ssid_);
+  Serial.printf("Password length: %d\n", strlen(password_));
+
   status_ = WiFiConnectionStatus::CONNECTING;
+
+  // Try disconnecting first to clear any old connections
+  WiFi.disconnect(true);
+  delay(1000);
 
   WiFi.persistent(false);
   WiFi.mode(WIFI_STA);
   WiFi.setAutoReconnect(true);
   WiFi.setSleepMode(WIFI_NONE_SLEEP);
+
+  Serial.println("Starting WiFi.begin()...");
   WiFi.begin(ssid_, password_);
+
+  unsigned long startTime = millis();
+  unsigned long lastStatusPrint = 0;
+  const unsigned long timeout = 30000;      // 30 second timeout
+  const unsigned long statusInterval = 500; // Print status every 500ms
+
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    // Check timeout
+    if (millis() - startTime > timeout)
+    {
+      Serial.println("WiFi Connection failed - timeout!");
+      status_ = WiFiConnectionStatus::FAILED;
+      return false;
+    }
+
+    // Print status periodically (non-blocking)
+    if (millis() - lastStatusPrint > statusInterval)
+    {
+      printWiFiStatus(WiFi.status());
+      lastStatusPrint = millis();
+    }
+
+    // Call the update callback frequently for smooth LED animation
+    if (updateCallback)
+    {
+      updateCallback();
+    }
+
+    delay(50); // Much shorter delay for smooth LED updates
+  }
+
+  status_ = WiFiConnectionStatus::CONNECTED;
+  Serial.println("WiFi Connected!");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+  Serial.print("Signal strength: ");
+  Serial.println(WiFi.RSSI());
+  return true;
+}
+
+bool WiFiManager::connect()
+{
+  return connectWithCallback(nullptr);
 }
 
 bool WiFiManager::isConnected()
 {
   if (WiFi.status() == WL_CONNECTED && status_ != WiFiConnectionStatus::CONNECTED)
   {
+    // Just connected!
     status_ = WiFiConnectionStatus::CONNECTED;
     Serial.println("WiFi Connected!");
     Serial.print("IP address: ");
@@ -29,6 +83,7 @@ bool WiFiManager::isConnected()
   }
   else if (WiFi.status() != WL_CONNECTED && status_ == WiFiConnectionStatus::CONNECTED)
   {
+    // Disconnected
     status_ = WiFiConnectionStatus::DISCONNECTED;
   }
 
@@ -47,6 +102,7 @@ void WiFiManager::handleReconnection()
 
 WiFiConnectionStatus WiFiManager::getStatus()
 {
+  // Update status based on actual WiFi state
   if (WiFi.status() != WL_CONNECTED && status_ == WiFiConnectionStatus::CONNECTED)
   {
     status_ = WiFiConnectionStatus::DISCONNECTED;

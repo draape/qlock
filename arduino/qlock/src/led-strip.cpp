@@ -1,7 +1,7 @@
 #include "led-strip.h"
 #include <Arduino.h>
 
-WS2812Status::WS2812Status(int pin, int numPixels, int statusPixelIndex)
+LedStrip::LedStrip(int pin, int numPixels, int statusPixelIndex)
     : strip_(numPixels, pin, NEO_GRB + NEO_KHZ800),
       statusPixelIndex_(statusPixelIndex),
       currentPattern_(LEDPattern::OFF),
@@ -12,14 +12,14 @@ WS2812Status::WS2812Status(int pin, int numPixels, int statusPixelIndex)
 {
 }
 
-void WS2812Status::begin()
+void LedStrip::begin()
 {
   strip_.begin();
   strip_.clear();
   strip_.show();
 }
 
-void WS2812Status::setPattern(LEDPattern pattern)
+void LedStrip::setPattern(LEDPattern pattern)
 {
   if (currentPattern_ != pattern)
   {
@@ -47,7 +47,7 @@ void WS2812Status::setPattern(LEDPattern pattern)
   }
 }
 
-void WS2812Status::update()
+void LedStrip::update()
 {
   switch (currentPattern_)
   {
@@ -67,7 +67,7 @@ void WS2812Status::update()
   }
 }
 
-void WS2812Status::updatePulse()
+void LedStrip::updatePulse()
 {
   unsigned long currentTime = millis();
 
@@ -94,7 +94,7 @@ void WS2812Status::updatePulse()
   }
 }
 
-void WS2812Status::updateBlink()
+void LedStrip::updateBlink()
 {
   unsigned long currentTime = millis();
 
@@ -115,17 +115,17 @@ void WS2812Status::updateBlink()
   }
 }
 
-void WS2812Status::clear()
+void LedStrip::clear()
 {
   strip_.clear();
 }
 
-void WS2812Status::show()
+void LedStrip::show()
 {
   strip_.show();
 }
 
-uint32_t WS2812Status::colorFromPattern(LEDPattern pattern, int brightness)
+uint32_t LedStrip::colorFromPattern(LEDPattern pattern, int brightness)
 {
   switch (pattern)
   {
