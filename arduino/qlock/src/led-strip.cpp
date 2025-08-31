@@ -119,11 +119,44 @@ void LedStrip::updateBlink()
 void LedStrip::clear()
 {
   strip_.clear();
+  // Restore status LED if it should be on
+  if (currentPattern_ == LEDPattern::SOLID_WHITE || currentPattern_ == LEDPattern::SOLID_GREEN)
+  {
+    strip_.setPixelColor(statusPixelIndex_, colorFromPattern(currentPattern_));
+  }
 }
 
 void LedStrip::show()
 {
   strip_.show();
+}
+
+void LedStrip::setPixel(int index, uint32_t color)
+{
+  // Don't overwrite the status pixel unless explicitly intended
+  if (!isStatusPixel(index))
+  {
+    strip_.setPixelColor(index, color);
+  }
+}
+
+void LedStrip::setPixel(int index, uint8_t r, uint8_t g, uint8_t b)
+{
+  setPixel(index, strip_.Color(r, g, b));
+}
+
+void LedStrip::setPixels(const int *indices, int count, uint32_t color)
+{
+  for (int i = 0; i < count; i++)
+  {
+    setPixel(indices[i], color);
+  }
+}
+
+void LedStrip::setPixels(const int *indices, int count, uint8_t r, uint8_t g, uint8_t b)
+{
+  uint32_t color = strip_.Color(r, g, b);
+  setPixels(indices, count, color);
 }
 
 uint32_t LedStrip::colorFromPattern(LEDPattern pattern, int brightness)

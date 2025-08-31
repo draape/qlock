@@ -3,6 +3,7 @@
 #include "time-manager.h"
 #include "led-strip.h"
 #include "wifi-config.h" // Contains WIFI_SSID and WIFI_PASSWORD
+#include "clock-logic.h"
 
 // LED Configuration
 const int LED_PIN = D1; // Your WS2812 strip data pin
@@ -13,6 +14,7 @@ const int STATUS_LED_INDEX = 0;
 WiFiManager wifiManager(WIFI_SSID, WIFI_PASSWORD);
 TimeManager timeManager;
 LedStrip ledStrip(LED_PIN, NUM_LEDS, STATUS_LED_INDEX);
+ClockLogic clockLogic;
 
 // Simple state tracking
 bool initialSetupComplete = false;
@@ -86,10 +88,20 @@ void handleWordClock()
     return;
   }
 
-  // Print current time
-  char timeBuffer[32];
-  strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", &timeInfo);
-  Serial.println(timeBuffer);
+  // Update clock logic with current time
+  bool timeChanged = clockLogic.updateTime(timeInfo);
+
+  int minute = clockLogic.getMinute() % 5;
+  Serial.println(minute);
+
+  ledStrip.clear();
+
+  for (int i = 1; i <= minute; i++)
+  {
+    ledStrip.setPixel(i, ledStrip.White(50));
+  }
+
+  ledStrip.show();
 
   // TODO: Add your word clock logic here:
   // - Clear the strip: statusLED.clear()

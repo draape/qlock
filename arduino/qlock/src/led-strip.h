@@ -20,13 +20,24 @@ class LedStrip
 public:
   LedStrip(int pin, int numPixels, int statusPixelIndex = 0);
 
+  // Status LED methods
   void begin();
   void setPattern(LEDPattern pattern);
   void update(); // Call this in loop() for non-blocking patterns
-  void clear();  // Turn off all pixels
-  void show();   // Update the strip
 
-  // Access to the strip for your word clock logic
+  // Word clock display methods
+  void clear();                                                                   // Turn off all pixels
+  void show();                                                                    // Update the strip
+  void setPixel(int index, uint32_t color);                                       // Set single pixel
+  void setPixel(int index, uint8_t r, uint8_t g, uint8_t b);                      // Set single pixel with RGB
+  void setPixels(const int *indices, int count, uint32_t color);                  // Set multiple pixels
+  void setPixels(const int *indices, int count, uint8_t r, uint8_t g, uint8_t b); // Set multiple pixels with RGB
+
+  // Color helper methods
+  uint32_t Color(uint8_t r, uint8_t g, uint8_t b) { return strip_.Color(r, g, b); }
+  uint32_t White(uint8_t brightness = 255) { return strip_.Color(brightness, brightness, brightness); }
+
+  // Access to the strip for advanced usage
   Adafruit_NeoPixel &getStrip() { return strip_; }
 
 private:
@@ -41,6 +52,7 @@ private:
   void updatePulse();
   void updateBlink();
   uint32_t colorFromPattern(LEDPattern pattern, int brightness = 255);
+  bool isStatusPixel(int index) const { return index == statusPixelIndex_; }
 };
 
 #endif
