@@ -7,12 +7,12 @@
 enum class LEDPattern
 {
   OFF,
-  PULSING_YELLOW, // WiFi connecting
-  PULSING_BLUE,   // Time syncing
-  PULSING_WHITE,  // Non-critical warning (time refresh failed)
-  BLINKING_RED,   // Critical error
-  SOLID_GREEN,    // Success (temporary)
-  SOLID_WHITE     // Connection successful (stays on)
+  SOLID_YELLOW,  // WiFi connecting
+  SOLID_BLUE,    // Time syncing
+  PULSING_WHITE, // Non-critical warning (time refresh failed)
+  BLINKING_RED,  // Critical error
+  SOLID_GREEN,   // Success (temporary)
+  SOLID_WHITE    // Connection successful (stays on)
 };
 
 class LedStrip

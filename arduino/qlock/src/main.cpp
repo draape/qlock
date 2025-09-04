@@ -4,10 +4,11 @@
 #include "led-strip.h"
 #include "wifi-config.h" // Contains WIFI_SSID and WIFI_PASSWORD
 #include "clock-logic.h"
+#include "word-mapping.h"
 
 // LED Configuration
 const int LED_PIN = D1; // Your WS2812 strip data pin
-const int NUM_LEDS = 144;
+const int NUM_LEDS = 115;
 const int STATUS_LED_INDEX = 0;
 
 // Global objects
@@ -15,6 +16,7 @@ WiFiManager wifiManager(WIFI_SSID, WIFI_PASSWORD);
 TimeManager timeManager;
 LedStrip ledStrip(LED_PIN, NUM_LEDS, STATUS_LED_INDEX);
 ClockLogic clockLogic;
+WordMapping wordMap;
 
 // Simple state tracking
 bool initialSetupComplete = false;
@@ -30,7 +32,7 @@ void updateLedStrip()
 void attemptTimeRefresh()
 {
   Serial.println("Attempting daily time refresh...");
-  ledStrip.setPattern(LEDPattern::PULSING_BLUE);
+  ledStrip.setPattern(LEDPattern::SOLID_BLUE);
 
   // Reconnect WiFi
   WiFi.mode(WIFI_STA);
@@ -79,6 +81,20 @@ void attemptTimeRefresh()
   }
 }
 
+void testCorners()
+{
+  ledStrip.clear();
+
+  Serial.println("Testing corner minute indicators...");
+
+  ledStrip.setPixel(wordMap.getMinuteOne(), ledStrip.Color(255, 0, 0));
+  ledStrip.setPixel(wordMap.getMinuteTwo(), ledStrip.Color(0, 255, 0));
+  ledStrip.setPixel(wordMap.getMinuteThree(), ledStrip.Color(0, 0, 255));
+  ledStrip.setPixel(wordMap.getMinuteFour(), ledStrip.Color(255, 255, 0));
+
+  ledStrip.show();
+}
+
 void handleWordClock()
 {
   struct tm timeInfo;
@@ -88,25 +104,14 @@ void handleWordClock()
     return;
   }
 
-  // Update clock logic with current time
-  bool timeChanged = clockLogic.updateTime(timeInfo);
+  // Print current time
+  char timeBuffer[32];
+  strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", &timeInfo);
+  Serial.println(timeBuffer);
 
-  int minute = clockLogic.getMinute() % 5;
-  Serial.println(minute);
+  Serial.println(timeInfo.tm_min);
 
-  ledStrip.clear();
-
-  for (int i = 1; i <= minute; i++)
-  {
-    ledStrip.setPixel(i, ledStrip.White(50));
-  }
-
-  ledStrip.show();
-
-  // TODO: Add your word clock logic here:
-  // - Clear the strip: statusLED.clear()
-  // - Set pixels for time display: statusLED.getStrip().setPixelColor(i, color)
-  // - Update the strip: statusLED.show()
+  testCorners();
 
   // Sleep until the next minute
   int secondsToWait = 60 - timeInfo.tm_sec;
@@ -123,15 +128,15 @@ void setup()
   // Initialize LED strip
   Serial.println("Initializing LED strip...");
   ledStrip.begin();
-  Serial.println("Setting pattern to pulsing yellow...");
-  ledStrip.setPattern(LEDPattern::PULSING_YELLOW);
+  Serial.println("Setting pattern to solid yellow...");
+  ledStrip.setPattern(LEDPattern::SOLID_YELLOW);
 
   // Connect to WiFi with LED callback
   Serial.println("Connecting to WiFi for initial setup...");
   if (wifiManager.connectWithCallback(updateLedStrip))
   {
     Serial.println("WiFi connected, fetching time...");
-    ledStrip.setPattern(LEDPattern::PULSING_BLUE);
+    ledStrip.setPattern(LEDPattern::SOLID_BLUE);
 
     timeManager.begin();
 

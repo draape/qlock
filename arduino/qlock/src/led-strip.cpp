@@ -36,6 +36,8 @@ void LedStrip::setPattern(LEDPattern pattern)
       strip_.setPixelColor(statusPixelIndex_, 0);
       strip_.show();
       break;
+    case LEDPattern::SOLID_YELLOW:
+    case LEDPattern::SOLID_BLUE:
     case LEDPattern::SOLID_GREEN:
     case LEDPattern::SOLID_WHITE:
       strip_.setPixelColor(statusPixelIndex_, colorFromPattern(pattern));
@@ -52,8 +54,6 @@ void LedStrip::update()
 {
   switch (currentPattern_)
   {
-  case LEDPattern::PULSING_YELLOW:
-  case LEDPattern::PULSING_BLUE:
   case LEDPattern::PULSING_WHITE:
     updatePulse();
     break;
@@ -73,19 +73,19 @@ void LedStrip::updatePulse()
   unsigned long currentTime = millis();
 
   if (currentTime - lastUpdate_ > 20)
-  { // Update every 20ms for smooth pulse
+  {
     lastUpdate_ = currentTime;
 
     pulseValue_ += pulseDirection_ * 5;
 
-    if (pulseValue_ >= 255)
+    if (pulseValue_ >= 200)
     {
-      pulseValue_ = 255;
+      pulseValue_ = 200;
       pulseDirection_ = -1;
     }
-    else if (pulseValue_ <= 0)
+    else if (pulseValue_ <= 20)
     {
-      pulseValue_ = 0;
+      pulseValue_ = 20;
       pulseDirection_ = 1;
     }
 
@@ -100,7 +100,7 @@ void LedStrip::updateBlink()
   unsigned long currentTime = millis();
 
   if (currentTime - lastUpdate_ > 300)
-  { // Blink every 300ms
+  {
     lastUpdate_ = currentTime;
     blinkState_ = !blinkState_;
 
@@ -120,7 +120,7 @@ void LedStrip::clear()
 {
   strip_.clear();
   // Restore status LED if it should be on
-  if (currentPattern_ == LEDPattern::SOLID_WHITE || currentPattern_ == LEDPattern::SOLID_GREEN)
+  if (currentPattern_ != LEDPattern::OFF)
   {
     strip_.setPixelColor(statusPixelIndex_, colorFromPattern(currentPattern_));
   }
@@ -133,7 +133,6 @@ void LedStrip::show()
 
 void LedStrip::setPixel(int index, uint32_t color)
 {
-  // Don't overwrite the status pixel unless explicitly intended
   if (!isStatusPixel(index))
   {
     strip_.setPixelColor(index, color);
@@ -161,20 +160,24 @@ void LedStrip::setPixels(const int *indices, int count, uint8_t r, uint8_t g, ui
 
 uint32_t LedStrip::colorFromPattern(LEDPattern pattern, int brightness)
 {
+  // Use moderate brightness for all solid patterns to save power
+  int solidBrightness = 80; // About 30% brightness for solid colors
+
   switch (pattern)
   {
-  case LEDPattern::PULSING_YELLOW:
-    return strip_.Color((brightness * 255) / 255, (brightness * 200) / 255, 0); // Yellow
-  case LEDPattern::PULSING_BLUE:
-    return strip_.Color(0, 0, brightness); // Blue
+  case LEDPattern::SOLID_YELLOW:
+    return strip_.Color(solidBrightness, solidBrightness * 0.84, 0); // Yellow
+  case LEDPattern::SOLID_BLUE:
+    return strip_.Color(0, 0, solidBrightness); // Blue
   case LEDPattern::PULSING_WHITE:
-    return strip_.Color(brightness, brightness, brightness); // White
+    // Keep variable brightness for pulsing white (non-critical warning)
+    return strip_.Color(brightness * 0.3, brightness * 0.3, brightness * 0.3); // Dimmed white
   case LEDPattern::BLINKING_RED:
-    return strip_.Color(brightness, 0, 0); // Red
+    return strip_.Color(solidBrightness, 0, 0); // Red
   case LEDPattern::SOLID_GREEN:
-    return strip_.Color(0, brightness, 0); // Green
+    return strip_.Color(0, solidBrightness, 0); // Green
   case LEDPattern::SOLID_WHITE:
-    return strip_.Color(brightness, brightness, brightness); // White
+    return strip_.Color(solidBrightness, solidBrightness, solidBrightness); // White
   default:
     return 0; // Off
   }
