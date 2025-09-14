@@ -38,7 +38,7 @@ void attemptTimeRefresh()
   WiFi.mode(WIFI_STA);
   if (wifiManager.connectWithCallback(updateLedStrip))
   {
-    timeManager.begin();
+    // NTP sync happens automatically in background, no need to reinitialize
 
     // Try for 10 seconds
     unsigned long syncStart = millis();
@@ -79,20 +79,6 @@ void attemptTimeRefresh()
     Serial.println("WiFi connection failed during refresh - continuing with current time");
     ledStrip.setPattern(LEDPattern::PULSING_WHITE); // Non-critical warning
   }
-}
-
-void testCorners()
-{
-  ledStrip.clear();
-
-  Serial.println("Testing corner minute indicators...");
-
-  ledStrip.setPixel(wordMap.getMinuteOne(), ledStrip.Color(255, 0, 0));
-  ledStrip.setPixel(wordMap.getMinuteTwo(), ledStrip.Color(0, 255, 0));
-  ledStrip.setPixel(wordMap.getMinuteThree(), ledStrip.Color(0, 0, 255));
-  ledStrip.setPixel(wordMap.getMinuteFour(), ledStrip.Color(255, 255, 0));
-
-  ledStrip.show();
 }
 
 void displayWord(int *wordIndices)

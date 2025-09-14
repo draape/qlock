@@ -21,6 +21,7 @@ void TimeManager::begin()
   delay(1000);
 }
 
+
 bool TimeManager::isTimeSynced()
 {
   return checkTimeSync() && status_ == TimeStatus::SYNCED;
