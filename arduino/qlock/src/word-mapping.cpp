@@ -2,62 +2,46 @@
 
 WordMapping::WordMapping()
 {
-  // Based on the LED strip flow shown in the image
-  // Grid is 11x11, LEDs flow: right→left on odd rows, left→right on even rows
-  // Row 0: 0-10 (right to left)
-  // Row 1: 11-21 (left to right)
-  // Row 2: 22-32 (right to left)
-  // etc.
+  klokken_ = new int[10]{11, 13, 32, 33, 52, 53, 72, 92, 93, -1};
+  // er_ = new int[3]{92, 93, -1};
 
-  // Row 0: K L O K K E N V E R M (indices 0-10, right to left flow)
-  klokken_ = {4, 6}; // KLOKKEN (positions 4-9 in reverse = LED indices 1-6)
+  femIndicator_ = new int[4]{10, 14, 31, -1};
+  paa1_ = new int[3]{51, 54, -1};
 
-  // Row 1: F E M H P Å S U E T S (indices 11-21, left to right flow)
-  fem_ = {11, 3}; // FEM (positions 0-2 = LED indices 11-13)
+  ti_ = new int[3]{9, 15, -1};
+  paa2_ = new int[3]{35, 50, -1};
 
-  // Row 2: T I L P Å S I D O S N (indices 22-32, right to left flow)
-  ti_ = {31, 2};  // TI (positions 0-1 in reverse = LED indices 31-32)
-  paa_ = {27, 2}; // PÅ (positions 4-5 in reverse = LED indices 27-28)
+  kvart_ = new int[6]{8, 16, 29, 36, 49, -1};
+  paa3_ = new int[3]{69, 76, -1};
 
-  // Row 3: K V A R T N P Å S T O (indices 33-43, left to right flow)
-  kvart_ = {33, 5}; // KVART (positions 0-4 = LED indices 33-37)
+  over_ = new int[5]{7, 17, 28, 37, -1};
 
-  // Row 4: O V E R X A M B P M Z (indices 44-54, right to left flow)
-  over_ = {51, 4}; // OVER (positions 0-3 in reverse = LED indices 51-54)
+  halv_ = new int[5]{6, 18, 27, 38, -1};
 
-  // Row 5: H A L V B I E G E N Z (indices 55-65, left to right flow)
-  halv_ = {55, 4}; // HALV (positions 0-3 = LED indices 55-58)
+  ett_ = new int[4]{5, 19, 26, -1};
+  to_ = new int[3]{46, 59, -1};
+  tre_ = new int[4]{79, 86, 99, -1};
 
-  // Row 6: E T T N T O A T R E X (indices 66-76, right to left flow)
-  ett_ = {74, 3}; // ETT (positions 0-2 in reverse = LED indices 74-76)
-  to_ = {71, 2};  // TO (positions 5-6 in reverse = LED indices 70-71)
-  tre_ = {67, 3}; // TRE (positions 8-10 in reverse = LED indices 66-68)
+  fire_ = new int[5]{4, 20, 25, 40, -1};
+  fem_ = new int[4]{45, 60, 65, -1};
+  seks_ = new int[5]{80, 85, 100, 106, -1};
 
-  // Row 7: F I R E F E M S E K S (indices 77-87, left to right flow)
-  fire_ = {77, 4}; // FIRE (positions 0-3 = LED indices 77-80)
-  seks_ = {84, 4}; // SEKS (positions 7-10 = LED indices 84-87)
+  syv_ = new int[4]{3, 21, 24, -1};
+  aatte_ = new int[5]{41, 44, 61, 64, -1};
+  ni_ = new int[3]{81, 84, -1};
+  ti_num_ = new int[3]{101, 105, -1};
 
-  // Row 8: S Y V Å T T E N I T I (indices 88-98, right to left flow)
-  syv_ = {96, 3};    // SYV (positions 0-2 in reverse = LED indices 96-98)
-  aatte_ = {92, 4};  // ÅTTE (positions 4-7 in reverse = LED indices 91-94)
-  ni_ = {89, 2};     // NI (positions 8-9 in reverse = LED indices 88-89)
-  ti_num_ = {89, 2}; // TI (10) - same as NI position, different context
-
-  // Row 9: E L E V E S T O L V (indices 99-109, left to right flow)
-  elleve_ = {99, 6}; // ELLEVE (positions 0-5 = LED indices 99-104)
-  tolv_ = {106, 4};  // TOLV (positions 6-9 = LED indices 106-109)
+  elleve_ = new int[7]{2, 22, 23, 42, 43, 62, -1};
+  tolv_ = new int[5]{82, 83, 102, 104, -1};
 
   // Corner minute indicators
-  // Based on 11x11 grid with serpentine flow
-  minuteOne_ = 12;    // Top left corner (start of LED strip)
-  minuteTwo_ = 114;   // Top right corner (end of first row)
-  minuteThree_ = 103; // Bottom right corner (end of LED strip, assuming 121 total LEDs)
-  minuteFour_ = 1;    // Bottom left corner (start of last row)
-
-  // Note: Adjust these indices based on your actual LED count and corner positions
+  minuteOne_ = 12;    // Top left corner
+  minuteTwo_ = 114;   // Top right corner
+  minuteThree_ = 103; // Bottom right corner
+  minuteFour_ = 1;    // Bottom left corner
 }
 
-WordMap WordMapping::getHourWord(int hour) const
+int *WordMapping::getHourWord(int hour) const
 {
   // Convert 24-hour to 12-hour and handle special cases
   hour = hour % 12;
@@ -95,20 +79,20 @@ WordMap WordMapping::getHourWord(int hour) const
   }
 }
 
-void WordMapping::getMinuteCorners(int minutes, int *cornerIndices, int *count) const
-{
-  *count = minutes % 5; // Minutes 1-4 show corners, 0 and 5+ show no corners
+// void WordMapping::getMinuteCorners(int minutes, int *cornerIndices, int *count) const
+// {
+//   *count = minutes % 5; // Minutes 1-4 show corners, 0 and 5+ show no corners
 
-  if (*count > 0 && *count <= 4)
-  {
-    // Light up corners in order: top-left, top-right, bottom-right, bottom-left
-    if (*count >= 1)
-      cornerIndices[0] = minuteOne_;
-    if (*count >= 2)
-      cornerIndices[1] = minuteTwo_;
-    if (*count >= 3)
-      cornerIndices[2] = minuteThree_;
-    if (*count >= 4)
-      cornerIndices[3] = minuteFour_;
-  }
-}
+//   if (*count > 0 && *count <= 4)
+//   {
+//     // Light up corners in order: top-left, top-right, bottom-right, bottom-left
+//     if (*count >= 1)
+//       cornerIndices[0] = minuteOne_;
+//     if (*count >= 2)
+//       cornerIndices[1] = minuteTwo_;
+//     if (*count >= 3)
+//       cornerIndices[2] = minuteThree_;
+//     if (*count >= 4)
+//       cornerIndices[3] = minuteFour_;
+//   }
+// }

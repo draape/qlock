@@ -95,6 +95,14 @@ void testCorners()
   ledStrip.show();
 }
 
+void displayWord(int *wordIndices)
+{
+  for (int i = 0; wordIndices[i] != -1; i++)
+  {
+    ledStrip.setPixel(wordIndices[i], ledStrip.White(150));
+  }
+}
+
 void handleWordClock()
 {
   struct tm timeInfo;
@@ -104,14 +112,103 @@ void handleWordClock()
     return;
   }
 
-  // Print current time
-  char timeBuffer[32];
-  strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", &timeInfo);
-  Serial.println(timeBuffer);
+  ledStrip.clear();
 
   Serial.println(timeInfo.tm_min);
+  Serial.println(timeInfo.tm_hour);
 
-  testCorners();
+  int currentMinute = timeInfo.tm_min;
+  int minuteDisplay = currentMinute % 5;
+  if (minuteDisplay > 0)
+  {
+    ledStrip.setPixel(wordMap.getMinuteOne(), ledStrip.Color(255, 255, 255));
+  }
+  if (minuteDisplay > 1)
+  {
+    ledStrip.setPixel(wordMap.getMinuteTwo(), ledStrip.Color(255, 255, 255));
+  }
+  if (minuteDisplay > 2)
+  {
+    ledStrip.setPixel(wordMap.getMinuteThree(), ledStrip.Color(255, 255, 255));
+  }
+  if (minuteDisplay > 3)
+  {
+    ledStrip.setPixel(wordMap.getMinuteFour(), ledStrip.Color(255, 255, 255));
+  }
+
+  int currentHour = timeInfo.tm_hour;
+
+  // Take into account the way time is communicated in Norwegian
+  if (currentMinute >= 20)
+  {
+    currentHour = currentHour + 1;
+  }
+
+  displayWord(wordMap.getKlokken());
+  displayWord(wordMap.getHourWord(currentHour));
+
+  if (currentMinute >= 5 && currentMinute < 10)
+  {
+    displayWord(wordMap.getFemIndicator());
+    displayWord(wordMap.getOver());
+  }
+  else if (currentMinute >= 10 && currentMinute < 15)
+  {
+    displayWord(wordMap.getTi());
+    displayWord(wordMap.getOver());
+  }
+  else if (currentMinute >= 15 && currentMinute < 20)
+  {
+    displayWord(wordMap.getKvart());
+    displayWord(wordMap.getOver());
+  }
+  else if (currentMinute >= 20 && currentMinute < 25)
+  {
+    displayWord(wordMap.getTi());
+    displayWord(wordMap.getPaa2());
+    displayWord(wordMap.getHalv());
+  }
+  else if (currentMinute >= 25 && currentMinute < 30)
+  {
+    displayWord(wordMap.getFemIndicator());
+    displayWord(wordMap.getPaa1());
+    displayWord(wordMap.getHalv());
+  }
+  else if (currentMinute >= 30 && currentMinute < 35)
+  {
+    displayWord(wordMap.getHalv());
+  }
+  else if (currentMinute >= 35 && currentMinute < 40)
+  {
+    displayWord(wordMap.getFemIndicator());
+    displayWord(wordMap.getOver());
+    displayWord(wordMap.getHalv());
+  }
+  else if (currentMinute >= 40 && currentMinute < 45)
+  {
+    displayWord(wordMap.getTi());
+    displayWord(wordMap.getOver());
+    displayWord(wordMap.getHalv());
+  }
+  else if (currentMinute >= 45 && currentMinute < 50)
+  {
+    displayWord(wordMap.getKvart());
+    displayWord(wordMap.getPaa3());
+  }
+  else if (currentMinute >= 50 && currentMinute < 55)
+  {
+    displayWord(wordMap.getTi());
+    displayWord(wordMap.getPaa2());
+  }
+  else if (currentMinute >= 55 && currentMinute < 60)
+  {
+    displayWord(wordMap.getFemIndicator());
+    displayWord(wordMap.getPaa1());
+  }
+
+  Serial.println();
+
+  ledStrip.show();
 
   // Sleep until the next minute
   int secondsToWait = 60 - timeInfo.tm_sec;

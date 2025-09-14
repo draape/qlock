@@ -1,91 +1,73 @@
 #ifndef WORD_MAPPING_H
 #define WORD_MAPPING_H
 
-// Norwegian Word Clock Mapping
-// Grid is 11x11 = 121 LEDs total (LED strip flows as shown in image)
-
-struct WordMap
-{
-  int startIndex;
-  int length;
-
-  // Helper to get all indices for this word
-  void getIndices(int *indices) const
-  {
-    for (int i = 0; i < length; i++)
-    {
-      indices[i] = startIndex + i;
-    }
-  }
-};
-
 class WordMapping
 {
 public:
   WordMapping();
 
   // Get LED indices for specific words
-  WordMap getKlokken() const { return klokken_; }
-  WordMap getEr() const { return er_; }
-  WordMap getKvart() const { return kvart_; }
-  WordMap getPaa() const { return paa_; } // "på"
-  WordMap getHalv() const { return halv_; }
-  WordMap getTi() const { return ti_; } // "ti" (number/minutes)
-  WordMap getOver() const { return over_; }
+  int *getKlokken() const { return klokken_; }
+  int *getEr() const { return er_; }
+  int *getFemIndicator() const { return femIndicator_; }
+  int *getKvart() const { return kvart_; }
+  int *getPaa1() const { return paa1_; }
+  int *getPaa2() const { return paa2_; }
+  int *getPaa3() const { return paa3_; }
+  int *getHalv() const { return halv_; }
+  int *getTi() const { return ti_; }
+  int *getOver() const { return over_; }
 
   // Numbers 1-12
-  WordMap getEtt() const { return ett_; }       // 1
-  WordMap getTo() const { return to_; }         // 2
-  WordMap getTre() const { return tre_; }       // 3
-  WordMap getFire() const { return fire_; }     // 4
-  WordMap getFem() const { return fem_; }       // 5
-  WordMap getSeks() const { return seks_; }     // 6
-  WordMap getSyv() const { return syv_; }       // 7
-  WordMap getAatte() const { return aatte_; }   // 8 (åtte)
-  WordMap getNi() const { return ni_; }         // 9
-  WordMap getTiNum() const { return ti_num_; }  // 10 (different "ti" than minutes)
-  WordMap getElleve() const { return elleve_; } // 11
-  WordMap getTolv() const { return tolv_; }     // 12
+  int *getEtt() const { return ett_; }       // 1
+  int *getTo() const { return to_; }         // 2
+  int *getTre() const { return tre_; }       // 3
+  int *getFire() const { return fire_; }     // 4
+  int *getFem() const { return fem_; }       // 5
+  int *getSeks() const { return seks_; }     // 6
+  int *getSyv() const { return syv_; }       // 7
+  int *getAatte() const { return aatte_; }   // 8 (åtte)
+  int *getNi() const { return ni_; }         // 9
+  int *getTiNum() const { return ti_num_; }  // 10 (different "ti" than minutes)
+  int *getElleve() const { return elleve_; } // 11
+  int *getTolv() const { return tolv_; }     // 12
 
   // Helper function to get word by hour number (1-12)
-  WordMap getHourWord(int hour) const;
+  int *getHourWord(int hour) const;
 
-  // Corner minute indicators
   int getMinuteOne() const { return minuteOne_; }     // Top left corner
   int getMinuteTwo() const { return minuteTwo_; }     // Top right corner
   int getMinuteThree() const { return minuteThree_; } // Bottom right corner
   int getMinuteFour() const { return minuteFour_; }   // Bottom left corner
 
-  // Helper to get minute corner indices based on minute value (1-4)
-  void getMinuteCorners(int minutes, int *cornerIndices, int *count) const;
-
 private:
   // Word positions based on LED strip flow
-  WordMap klokken_; // "KLOKKEN"
-  WordMap er_;      // "ER"
-  WordMap kvart_;   // "KVART"
-  WordMap paa_;     // "PÅ"
-  WordMap halv_;    // "HALV"
-  WordMap ti_;      // "TI" (minutes)
-  WordMap over_;    // "OVER"
-  WordMap ett_;     // "ETT"
-  WordMap to_;      // "TO"
-  WordMap tre_;     // "TRE"
-  WordMap fire_;    // "FIRE"
-  WordMap fem_;     // "FEM"
-  WordMap seks_;    // "SEKS"
-  WordMap syv_;     // "SYV"
-  WordMap aatte_;   // "ÅTTE"
-  WordMap ni_;      // "NI"
-  WordMap ti_num_;  // "TI" (number 10)
-  WordMap elleve_;  // "ELLEVE"
-  WordMap tolv_;    // "TOLV"
-
-  // Corner minute indicators (single LEDs)
-  int minuteOne_;   // Top left corner
-  int minuteTwo_;   // Top right corner
-  int minuteThree_; // Bottom right corner
-  int minuteFour_;  // Bottom left corner
+  int *klokken_;      // "KLOKKEN"
+  int *er_;           // "ER"
+  int *femIndicator_; // "FEM"
+  int *kvart_;        // "KVART"
+  int *paa1_;         // "PÅ"
+  int *paa2_;         // "PÅ"
+  int *paa3_;         // "PÅ"
+  int *halv_;         // "HALV"
+  int *ti_;           // "TI" (minutes)
+  int *over_;         // "OVER"
+  int *ett_;          // "ETT"
+  int *to_;           // "TO"
+  int *tre_;          // "TRE"
+  int *fire_;         // "FIRE"
+  int *fem_;          // "FEM"
+  int *seks_;         // "SEKS"
+  int *syv_;          // "SYV"
+  int *aatte_;        // "ÅTTE"
+  int *ni_;           // "NI"
+  int *ti_num_;       // "TI" (number 10)
+  int *elleve_;       // "ELLEVE"
+  int *tolv_;         // "TOLV"
+  int minuteOne_;     // Top left corner
+  int minuteTwo_;     // Top right corner
+  int minuteThree_;   // Bottom right corner
+  int minuteFour_;    // Bottom left corner
 };
 
 #endif
